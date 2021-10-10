@@ -1,6 +1,8 @@
-pragma solidity >=0.5.0 <0.6.0;
+// SPDX-License-Identifier: MIT
 
-import "./zombiefeeding.sol";
+pragma solidity ^0.8.0;
+
+import "./ZombieFeeding.sol";
 
 contract ZombieHelper is ZombieFeeding {
     uint256 levelUpFee = 0.001 ether;
@@ -11,7 +13,7 @@ contract ZombieHelper is ZombieFeeding {
     }
 
     function withdraw() external onlyOwner {
-        address _owner = owner();
+        address payable _owner = payable(owner());
         _owner.transfer(address(this).balance);
     }
 

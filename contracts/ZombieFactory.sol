@@ -1,13 +1,10 @@
-pragma solidity >=0.5.0 <0.6.0;
+// SPDX-License-Identifier: MIT
 
-import "./ownable.sol";
-import "./safemath.sol";
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract ZombieFactory is Ownable {
-    using SafeMath for uint256;
-    using SafeMath32 for uint32;
-    using SafeMath16 for uint16;
-
     event NewZombie(uint256 zombieId, string name, uint256 dna);
 
     uint256 dnaDigits = 16;
@@ -29,11 +26,12 @@ contract ZombieFactory is Ownable {
     mapping(address => uint256) ownerZombieCount;
 
     function _createZombie(string memory _name, uint256 _dna) internal {
-        uint256 id = zombies.push(
-            Zombie(_name, _dna, 1, uint32(now + cooldownTime), 0, 0)
-        ) - 1;
+        zombies.push(
+            Zombie(_name, _dna, 1, uint32(block.timestamp + cooldownTime), 0, 0)
+        );
+        uint256 id = 1;
         zombieToOwner[id] = msg.sender;
-        ownerZombieCount[msg.sender] = ownerZombieCount[msg.sender].add(1);
+        ownerZombieCount[msg.sender]++;
         emit NewZombie(id, _name, _dna);
     }
 
@@ -47,7 +45,10 @@ contract ZombieFactory is Ownable {
     }
 
     function createRandomZombie(string memory _name) public {
-        require(ownerZombieCount[msg.sender] == 0);
+        require(
+            ownerZombieCount[msg.sender] == 0,
+            "You can create only one zombie"
+        );
         uint256 randDna = _generateRandomDna(_name);
         randDna = randDna - (randDna % 100);
         _createZombie(_name, randDna);

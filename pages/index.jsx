@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
 
 import Web3 from "web3";
-import cryptoZombiesABI from "cryptozombies_abi.json";
-
-const cryptoZombiesAddress = "YOUR_CONTRACT_ADDRESS";
+import ZombieOwnershipContract from "build/contracts/ZombieOwnership.json";
 
 export default function About() {
   const [web3, setWeb3] = useState(null),
     [address, setAddress] = useState(null),
-    [cryptoZombies, setCryptoZombies] = useState(null);
+    [cryptoZombies, setCryptoZombies] = useState(null),
+    [zombies, setZombies] = useState([]);
 
   const getZombieDetails = (id) =>
       cryptoZombies && cryptoZombies.methods.zombies(id).call(),
@@ -38,9 +37,14 @@ export default function About() {
   useEffect(() => {
     if (!web3) return;
 
-    setCryptoZombies(
-      new web3.eth.Contract(cryptoZombiesABI, cryptoZombiesAddress)
-    );
+    web3.eth.net.getId().then((id) => {
+      const deployedNetwork = ZombieOwnershipContract.networks[id],
+        instance = new web3.eth.Contract(
+          ZombieOwnershipContract.abi,
+          deployedNetwork && deployedNetwork.address
+        );
+      setCryptoZombies(instance);
+    });
   }, [web3]);
 
   useEffect(() => {
@@ -50,15 +54,28 @@ export default function About() {
     console.log(cryptoZombies);
 
     getZombiesByOwner(address).then(async (results) => {
-      console.log(results);
       let zombies = await Promise.all(
         results.map((zombieId, idx) =>
           getZombieDetails(zombieId).then((details) => details)
         )
       );
       console.log(zombies);
+      setZombies(zombies);
     });
   }, [address, cryptoZombies]);
 
-  return <div>About</div>;
+  return (
+    <div>
+      {JSON.stringify(zombies)}
+      <button
+        onClick={() => {
+          cryptoZombies.methods
+            .createRandomZombie("Mikolaj")
+            .send({ from: address });
+        }}
+      >
+        AAAA
+      </button>
+    </div>
+  );
 }
